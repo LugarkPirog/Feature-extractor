@@ -61,7 +61,7 @@ class BtcTransformer(object):
 
     def transform(self, arr):
         if type(arr) == np.ndarray:
-            array = arr
+            array = arr.reshape([-1, 1])
             # print('ndarray')
         elif type(arr) == list:
             array = np.array(arr).reshape([-1, 1])
@@ -206,6 +206,6 @@ if __name__ == '__main__':
     m_ = m.fit_transform(s)
     print(m_)
     print('________________________________________________________________________________')
-    new_s = ['23789adhjkbn3879y9HFujjdf', '12576abcdbabbbcd78dbc897ddc78adcbaff', '12901291039resrrHJDHSJLW323Ddds']
+    new_s = np.array(['23789adhjkbn3879y9HFujjdf', '12576abcdbabbbcd78dbc897ddc78adcbaff', '12901291039resrrHJDHSJLW323Ddds'])
     n = m.transform(new_s)
     print(n)
