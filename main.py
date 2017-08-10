@@ -88,6 +88,7 @@ class BtcTransformer(object):
         8) some letter repeats more than 3 times in a row
         9) any lettering of length 4 appears more than 1 time
         So, categorical columns are [0, 1, 2, 3, 4, 7, 8]
+        upd: add some new features
         """
         result = []
         letters = list(st)
