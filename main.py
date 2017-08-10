@@ -1,5 +1,4 @@
 import numpy as np
-import pandas as pd
 
 class BtcTransformer(object):
     """
@@ -75,7 +74,7 @@ class BtcTransformer(object):
                 features[num, col] = self.cache[i][0] if features[num, col] == 0 else self.cache[i][1]
         return features
 
-    # @staticmethod
+    @staticmethod
     def feature_extractor(self, st):
         """
         for input 'string' forming feature array with columns:
@@ -180,7 +179,7 @@ class BtcTransformer(object):
     def extract_feats(self, array):
         feats = []
         for s in array:
-            a = self.feature_extractor(s)
+            a = self.feature_extractor(self, s)
             feats.append(a)
         feats = np.array(feats)
         if self.catcols is None:
