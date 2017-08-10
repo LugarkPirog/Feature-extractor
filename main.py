@@ -1,5 +1,5 @@
 import numpy as np
-
+import pandas as pd
 
 class BtcTransformer(object):
     """
@@ -8,19 +8,32 @@ class BtcTransformer(object):
                                                        ... ,
                                                        [stringN', labelN]]
     """
-    __slots__ = ['arr', 'labels', 'catcols', 'cache']
+    __slots__ = [#'arr',
+                 # 'labels',
+                 'catcols',
+                 'cache']
 
-    def __init__(self, array):
-        if type(array) == np.ndarray:
-            self.arr = array
-        elif type(array) == list:
-            self.arr = np.array(array)
-        self.labels = array[:, -1]
+    def __init__(self):
+        # if type(array) == np.ndarray:
+        #     self.arr = array
+        # elif type(array) == list:
+        #     self.arr = np.array(array)
+        # self.labels = array[:, -1]
         self.catcols = None
         self.cache = []
 
-    def fit_transform(self):
-        features = self.extract_feats()
+    def fit_transform(self, array):
+        if type(array) == np.ndarray:
+            arr = array
+            # print('ndarray')
+        elif type(array) == list:
+            arr = np.array(array)
+            # print(arr[:, 0])
+        else:
+            raise NameError('Not a valuable array given!')
+        labels = arr[:, -1]
+
+        features = self.extract_feats(arr[:, 0])
         r, c = features.shape
         try:
             error = 1 in self.catcols
@@ -32,11 +45,11 @@ class BtcTransformer(object):
             z = sum([1 if i == 0 else 0 for i in features[:, col]])
             o = sum([1 if i == 1 else 0 for i in features[:, col]])
             try:
-                l0 = sum([1 if features[i, col] == 0 and self.labels[i] == '1' else 0 for i in range(r)]) / z
+                l0 = sum([1 if features[i, col] == 0 and labels[i] == '1' else 0 for i in range(r)]) / z
             except ZeroDivisionError:
                 l0 = 0.
             try:
-                l1 = sum([1 if features[i, col] == 1 and self.labels[i] == '1' else 0 for i in range(r)]) / o
+                l1 = sum([1 if features[i, col] == 1 and labels[i] == '1' else 0 for i in range(r)]) / o
             except ZeroDivisionError:
                 l1 = 0.
 
@@ -44,11 +57,25 @@ class BtcTransformer(object):
 
             for el in range(r):
                 features[el, col] = l0 if features[el, col] == 0 else l1
+            # print(self.cache)
         return features
 
-    def transform(self):
-        pass
+    def transform(self, arr):
+        if type(arr) == np.ndarray:
+            array = arr
+            # print('ndarray')
+        elif type(arr) == list:
+            array = np.array(arr).reshape([-1, 1])
+            # print(array[:, 0])
+        else:
+            raise NameError('Not a valuable array given!')
+        features = self.extract_feats(array[:, 0])
+        for i, col in enumerate(self.catcols):
+            for num in range(len(features[:, col])):
+                features[num, col] = self.cache[i][0] if features[num, col] == 0 else self.cache[i][1]
+        return features
 
+    # @staticmethod
     def feature_extractor(self, st):
         """
         for input 'string' forming feature array with columns:
@@ -61,6 +88,7 @@ class BtcTransformer(object):
         7) attitude lowers/uppers
         8) some letter repeats more than 3 times in a row
         9) any lettering of length 4 appears more than 1 time
+        So, categorical columns are [0, 1, 2, 3, 4, 7, 8]
         """
         result = []
         letters = list(st)
@@ -149,15 +177,36 @@ class BtcTransformer(object):
                 break
         return result
 
-    def extract_feats(self):
+    def extract_feats(self, array):
         feats = []
-        for s in self.arr:
+        for s in array:
             a = self.feature_extractor(s)
             feats.append(a)
         feats = np.array(feats)
-        unique = []
-        for i in range(feats.shape[1]):
-            unique.append(len(np.unique(feats[:, i])))
-        self.catcols = [i for i, j in enumerate(unique) if j == 2]
+        if self.catcols is None:
+            unique = []
+            # print('$$$$ ', feats.shape[1], ' $$$$')
+            for i in range(feats.shape[1]):
+                unique.append(len(np.unique(feats[:, i])))
+            self.catcols = [i for i, j in enumerate(unique) if j == 2]
+        # print('__________')
+        # print(self.catcols)
+        # print('__________')
 
         return feats
+
+if __name__ == '__main__':
+    s = [['12901291039resrrHJDHSJLW323Ddds', 1], ['13BsalkiOUIHwwbBDHhsyyriq223KJj3m9w', 0],
+         ['12901291039RESRHJDHSJLW323DDDS', 0], ['23BsalkiOUIHwwbBDHhsyyriq223KJj3m9w', 0],
+         ['12901291039rrrrrHJDHSJLW323Ddds', 0], ['33BsalkiOUIHwwbBDHhsyyriq223KJj3m9w', 1],
+         ['12901291039resrrHJDHSJLW323Ddds', 1], ['F3BsalkiOUIHwwbBDHhsyyriq223KJj3m9w', 0],
+         ['1290129103909090937823829918236', 1], ['Hh3BsalkiOUIHwwbBDHhsyyriq223KJj3m9w', 1],
+         ['12901291039resreresreHSJLW323Ddds', 1], ['13BsalkiOUIHwwbBDHhsyyriq223KJj3m9w', 1],
+         ['12576abcdbabbbcd78dbc897ddc78adcbaff', 0]]
+    m = BtcTransformer()
+    m_ = m.fit_transform(s)
+    print(m_)
+    print('________________________________________________________________________________')
+    new_s = ['23789adhjkbn3879y9HFujjdf', '12576abcdbabbbcd78dbc897ddc78adcbaff', '12901291039resrrHJDHSJLW323Ddds']
+    n = m.transform(new_s)
+    print(n)
