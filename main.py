@@ -78,27 +78,33 @@ class BtcTransformer(object):
     def feature_extractor(self, st):
         """
         for input 'string' forming feature array with columns:
-        1) 24 < len < 35
-        2) starts with '1', '3' or '0'
-        3) contains only: - lowercase
-        4) - uppercase
-        5) - digits
-        6) attitude of symbols in [a..f] and [g..z]
-        7) attitude lowers/uppers
-        8) some letter repeats more than 3 times in a row
-        9) any lettering of length 4 appears more than 1 time
-        So, categorical columns are [0, 1, 2, 3, 4, 7, 8]
+         1) 24 < len < 35
+         2) starts with '1', '3' or '0'
+         3) contains only: - lowercase
+         4) - uppercase
+         5) - digits
+         6) attitude of symbols in [a..f] and [g..z]
+         7) attitude lowers/uppers
+         8) some letter (not x) repeats more than 3 times in a row
+         9) any lettering of length 4 appears more than 1 time
+        10) string has at least 1 uppercase, lowercase and digit symbols
+        11) attitude letters/digits
+        12) any chains of digits?
+        13) any chains of letters?
+        So, categorical columns are [0, 1, 2, 3, 4, 7, 8, 9, 11, 12]
         upd: add some new features
         """
         result = []
         letters = list(st)
         length = len(st)
 
+        # ----------- #1 feature ------------
         # if 24 < len < 35?
         q = 1 if (24 < length < 35) else 0
         result.append(q)
         # print('len ', q)
 
+        # ----------- #2 feature ------------
         # does the string start with 0, 1 or 3?
         q = 1 if (letters[0] == '1' or letters[0] == '3' or letters[0] == '0') else 0
         result.append(q)
@@ -121,25 +127,28 @@ class BtcTransformer(object):
                 inA_F += 1
             elif letter.lower() in 'ghijklmnopqrstuvwxyz':
                 inG_Z += 1
+
+        # ----------- #3, 4, 5 features ------------
         q = 1 if lowers == length - digits else 0
         result.append(q)
         q = 1 if uppers == length - digits else 0
         result.append(q)
         q = 1 if digits == length else 0
         result.append(q)
-        # print('counts')
-        try:
-            q = inA_F / inG_Z
-        except ZeroDivisionError:
-            q = .0
-        # print('zerodivs ', q)
+
+        # ----------- #6 feature ------------
+        if inG_Z == 0:
+            inG_Z = 0.5
+        q = inA_F / inG_Z
         result.append(q)
-        try:
-            q = lowers / uppers
-        except ZeroDivisionError:
-            q = .0
+
+        # ----------- #7 feature ------------
+        if uppers == 0:
+            uppers = 0.5
+        q = lowers / uppers
         result.append(q)
-        # print('zerodivs ', q)
+
+        # ----------- #8 feature ------------
         # does the repeating appear in str?
         w = 3
         j = 0
@@ -147,7 +156,7 @@ class BtcTransformer(object):
         using = letters[0]
         for i in letters:
             count += 1
-            if using == i:
+            if using == i and using.lower() != 'x':
                 j += 1
             else:
                 j = 0
@@ -161,6 +170,7 @@ class BtcTransformer(object):
                 # print('not find 1')
                 break
 
+        # ----------- #9 feature ------------
         full = ''.join(a for a in letters)
         # print(full)
         count = 0
@@ -175,6 +185,26 @@ class BtcTransformer(object):
                 result.append(0)
                 # print('not find 2')
                 break
+
+        # ----------- #10 feature ------------
+        q = 1 if (lowers > 0 and uppers > 0 and digits > 0) else 0
+        result.append(q)
+
+        # ----------- #11 feature ------------
+        if digits == 0:
+            digits = 0.5
+        q = (lowers + uppers)/digits
+        result.append(q)
+
+        # ----------- #12, 13 feature ------------
+        q1 = q2 = 0
+        for i in range(length - 14):
+            if full[i:i+15].isdigit():
+                q1 = 1
+            if full[i:i+15].isalpha():
+                q2 = 1
+        result.append(q1)
+        result.append(q2)
         return result
 
     def extract_feats(self, array):
