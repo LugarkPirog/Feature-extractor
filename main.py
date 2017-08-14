@@ -39,18 +39,14 @@ class BtcTransformer(object):
         except TypeError:
             print('"Categorical columns" array is empty')
             exit()
-
+        mean_y = sum(int(val) for val in labels) / len(labels)
+        alpha = 8
         for col in self.catcols:
             z = sum([1 if i == 0 else 0 for i in features[:, col]])
             o = sum([1 if i == 1 else 0 for i in features[:, col]])
-            try:
-                l0 = sum([1 if features[i, col] == 0 and labels[i] == '1' else 0 for i in range(r)]) / z
-            except ZeroDivisionError:
-                l0 = 0.
-            try:
-                l1 = sum([1 if features[i, col] == 1 and labels[i] == '1' else 0 for i in range(r)]) / o
-            except ZeroDivisionError:
-                l1 = 0.
+
+            l0 = (sum([1 if features[i, col] == 0 and labels[i] == '1' else 0 for i in range(r)])*z + mean_y*alpha) / (z+alpha)
+            l1 = (sum([1 if features[i, col] == 1 and labels[i] == '1' else 0 for i in range(r)])*o + mean_y*alpha) / (o+alpha)
 
             self.cache.append([l0, l1])
 
