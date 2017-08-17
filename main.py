@@ -89,7 +89,8 @@ class BtcTransformer(object):
         11) attitude letters/digits
         12) any chains of digits?
         13) any chains of letters?
-        So, categorical columns are [0, 1, 2, 3, 4, 7, 8, 9, 11, 12]
+        14) any russian letters?
+        So, categorical columns are [0, 1, 2, 3, 4, 7, 8, 9, 11, 12, 13]
         upd: add some new features
         """
         result = []
@@ -196,13 +197,21 @@ class BtcTransformer(object):
 
         # ----------- #12, 13 feature ------------
         q1 = q2 = 0
-        for i in range(length - 14):
-            if full[i:i+15].isdigit():
+        for i in range(length - 10):
+            if full[i:i+11].isdigit():
                 q1 = 1
-            if full[i:i+15].isalpha():
+            if full[i:i+11].isalpha():
                 q2 = 1
         result.append(q1)
         result.append(q2)
+
+        # ----------- #14 feature ------------
+        q = 0
+        for i in range(length):
+            if full[i].lower() in 'абвгдеёжзиклмнопрстуфхцчшщьыъэюя':
+                q = 1
+        result.append(q)
+
         return result
 
     def extract_feats(self, array):
