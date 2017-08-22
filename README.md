@@ -1,4 +1,4 @@
-# Feature extractor for bitcoin wallet-numbers
+# Feature extractor for bitcoin-wallet numbers
 For input list or np.array of strings outputs an np.ndarray of features.
 
 Each feature answers the question:
