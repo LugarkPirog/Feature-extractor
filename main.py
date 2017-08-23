@@ -38,7 +38,7 @@ class BtcTransformer(object):
             error = 1 in self.catcols
         except TypeError:
             print('"Categorical columns" array is empty')
-            exit()
+            return None
 
         y_ = sum(int(val) for val in labels)
         mean_y = y_ / len(labels)
