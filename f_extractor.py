@@ -48,14 +48,11 @@ class FeatureExtractor(object):
         word_arr = []
         for w1 in voc1:
             a = [w1]
-            for w2 in voc2:
-                a.append(w2)
-            word_arr.append([(str(i[0]) + ' ' + str(i[1])) for i in combinations(a, 2)])
-        word_arr.append([(str(i[0]) + ' ' + str(i[1])) for i in permutations(voc2, 2)])
-        res = []
-        for i in word_arr:
-            res += i
-        word_arr = list(set(np.array(res).ravel()))
+            a.extend(voc2)
+            word_arr.extend([(str(i[0]) + ' ' + str(i[1])) for i in combinations(a, 2)])
+        word_arr.extend(voc2)
+
+        word_arr = list(set(np.array(word_arr).ravel()))
         #  ---------------  доработать тут надо, какой-нибудь permutations вставить или combinations
         #  ---------------  UPD: добавил
         for word in word_arr:
@@ -65,16 +62,21 @@ class FeatureExtractor(object):
         return feature_arr
 
     def cat_to_numeric(self, features, labels):
+        # Надо учитывать разницу в кол-ве отрицательных и положительных примеров !!!
         r, c = features.shape
         y_ = sum(int(val) for val in labels)
         mean_y = y_ / len(labels)
-        alpha = 10
+        alpha = 20
         cache = []
         for col in self.categ:
             z = sum([1 if i == 0 else 0 for i in features[:, col]])
             o = sum([1 if i == 1 else 0 for i in features[:, col]])
-            l0 = (sum([1 if features[i, col] == 0 and str(labels[i]) == '1' else 0 for i in range(r)])/y_*z + mean_y * alpha) / (z + alpha)
-            l1 = (sum([1 if features[i, col] == 1 and str(labels[i]) == '1' else 0 for i in range(r)])/y_*o + mean_y * alpha) / (o + alpha)
+            # div = z / o
+            # ATTENTION HERE !!! -------------------------
+            l0 = (sum([1 if features[i, col] == 0 and str(labels[i]) == '1' else 0 for i in range(r)])/y_*o + mean_y * alpha) / (z + alpha)
+            l1 = (sum([1 if features[i, col] == 1 and str(labels[i]) == '1' else 0 for i in range(r)])/y_*z + mean_y * alpha) / (o + alpha)
+            # THANKS !!! ---------------------------------
+            # l0, l1 = l0 / div, l1 * div
             cache.append((l0, l1))
             for el in range(r):
                 features[el, col] = l0 if features[el, col] == 0 else l1
@@ -100,3 +102,26 @@ class FeatureExtractor(object):
         feats = self.extract_feats(array)
         out = self.cat_to_numeric_with_cache(feats)
         return out
+
+    def __del__(self):
+        del self.cache
+        del self.categ
+
+if __name__ == '__main__':
+    import pandas as pd
+    s = [['собака кошка травмат купить броник', '1'], ['купить мм патроны нужен разрешение', '1'],
+         ['qewrio nreljkqw nnmd', '0']]
+    f = FeatureExtractor()
+    # a = f.fit_transform(s)
+    L = pd.read_csv('d:/NN1/data/real/test2.csv', sep=';', encoding='windows-1251', usecols=[0], skip_blank_lines=True,
+                    error_bad_lines=False).values.astype('str')
+    labels = pd.read_csv('d:/NN1/data/real/test2.csv', sep=';', usecols=[1], encoding='windows-1251',
+                         skip_blank_lines=True, error_bad_lines=False).values
+    labels = np.array([1 if i == 1 else 0 for i in labels], np.int32).reshape([-1, 1])
+    data = np.array(L[:, 0]).reshape((-1, 1))
+    transform = np.hstack((data, labels))
+    a = f.fit_transform(transform)
+    print(f.cache)
+    print(a)
+
+    # data = L
