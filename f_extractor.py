@@ -52,7 +52,10 @@ class FeatureExtractor(object):
                 a.append(w2)
             word_arr.append([(str(i[0]) + ' ' + str(i[1])) for i in combinations(a, 2)])
         word_arr.append([(str(i[0]) + ' ' + str(i[1])) for i in permutations(voc2, 2)])
-        word_arr = list(set(np.array(word_arr).ravel()))
+        res = []
+        for i in word_arr:
+            res += i
+        word_arr = list(set(np.array(res).ravel()))
         #  ---------------  доработать тут надо, какой-нибудь permutations вставить или combinations
         #  ---------------  UPD: добавил
         for word in word_arr:
