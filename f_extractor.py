@@ -1,5 +1,6 @@
 # import pickle
 import numpy as np
+from itertools import combinations, permutations
 
 
 class FeatureExtractor(object):
@@ -39,9 +40,21 @@ class FeatureExtractor(object):
 
         """
         feature_arr = []
-        word_arr = ['купить патрон', 'патрон мм', 'пневматический винтовка', 'купить разрешение', 'пистолет пулемет', 'купить нож']
+        voc1 = ['купить', 'покупать', 'брать', 'есть', 'помочь', 'нужный']
+        voc2 = ['травмат', 'винтовка', 'мосина', 'газовый', 'пистолет', 'бронежилет', 'бронник', 'боевой',
+                'травматический', 'оружие', 'мм', 'патрон', 'шт', 'наган', 'нож', 'огнестрел', 'травматический', 'тт',
+                'оса', 'пм', 'двухстволк', 'пистолет', 'разрешение', 'макарыч', 'патрон', 'иж', 'травмат', 'калаш',
+                'калашников', 'ствол']
+        word_arr = []
+        for w1 in voc1:
+            a = [w1]
+            for w2 in voc2:
+                a.append(w2)
+            word_arr.append([(str(i[0]) + ' ' + str(i[1])) for i in combinations(a, 2)])
+        word_arr.append([(str(i[0]) + ' ' + str(i[1])) for i in permutations(voc2, 2)])
+        word_arr = list(set(np.array(word_arr).ravel()))
         #  ---------------  доработать тут надо, какой-нибудь permutations вставить или combinations
-        str_words = string.split()
+        #  ---------------  UPD: добавил
         for word in word_arr:
             q = 1 if word in string else 0
             feature_arr.append(q)
